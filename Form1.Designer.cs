@@ -88,7 +88,7 @@
             this.txtQuantity = new TextBox { Text = "1" };
 
             this.btnAddPart = new Button { Text = "➕ Добавить" };
-            this.btnQuickAdd = new Button { Text = "📋 Быстрое добавление" };
+            //this.btnQuickAdd = new Button { Text = "📋 Быстрое добавление" };
             this.btnRemoveSelected = new Button { Text = "❌ Удалить выбранную" };
             this.btnCalculate = new Button { Text = "🎯 Рассчитать раскрой" };
             this.btnClear = new Button { Text = "🗑️ Очистить все" };
@@ -101,7 +101,7 @@
 
             // Привязка событий
             this.btnAddPart.Click += btnAddPart_Click;
-            this.btnQuickAdd.Click += btnQuickAdd_Click;
+            //this.btnQuickAdd.Click += btnQuickAdd_Click;
             this.btnRemoveSelected.Click += btnRemoveSelected_Click;
             this.btnCalculate.Click += btnCalculate_Click;
             this.btnClear.Click += btnClear_Click;
@@ -159,18 +159,18 @@
 
             this.btnAddPart.Dock = DockStyle.Fill;
             this.btnAddPart.UseVisualStyleBackColor = true;
-            this.btnAddPart.Margin = new Padding(5, 2, 0, 2);
+            this.btnAddPart.Margin = new Padding(0, 0, 0, 0);
 
-            this.btnQuickAdd.Dock = DockStyle.Fill;
-            this.btnQuickAdd.UseVisualStyleBackColor = true;
-            this.btnQuickAdd.Margin = new Padding(5, 2, 0, 2);
+            //this.btnQuickAdd.Dock = DockStyle.Fill;
+            //this.btnQuickAdd.UseVisualStyleBackColor = true;
+            //this.btnQuickAdd.Margin = new Padding(5, 2, 0, 2);
 
             inputTable.Controls.Add(label3, 0, 1);
             inputTable.Controls.Add(this.txtPartLength, 1, 1);
             inputTable.Controls.Add(this.labelQuantity, 3, 1);
             inputTable.Controls.Add(this.txtQuantity, 4, 1);
-            inputTable.Controls.Add(this.btnAddPart, 2, 1);
-            inputTable.Controls.Add(this.btnQuickAdd, 5, 1);
+            inputTable.Controls.Add(this.btnAddPart, 5, 1);
+            //inputTable.Controls.Add(this.btnQuickAdd, 5, 1);
 
             panel.Controls.Add(inputTable);
             return panel;
@@ -390,7 +390,7 @@
         private TextBox txtQuantity;
         private Label labelQuantity;
         private Button btnAddPart;
-        private Button btnQuickAdd;
+        //private Button btnQuickAdd;
         private Button btnRemoveSelected;
         private DataGridView dataGridViewParts;
         private Button btnCalculate;
