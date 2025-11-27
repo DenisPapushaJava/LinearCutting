@@ -244,14 +244,34 @@
             this.btnRemoveSelected.ForeColor = Color.White;
             this.btnRemoveSelected.FlatStyle = FlatStyle.Flat;
 
+            // Новые кнопки для сохранения и печати
+            this.btnSave = new Button { Text = "💾 Сохранить", Size = new Size(120, 30) };
+            this.btnPrint = new Button { Text = "🖨️ Печать", Size = new Size(100, 30) };
+
+            this.btnSave.BackColor = Color.SeaGreen;
+            this.btnSave.ForeColor = Color.White;
+            this.btnSave.FlatStyle = FlatStyle.Flat;
+
+            this.btnPrint.BackColor = Color.MediumPurple;
+            this.btnPrint.ForeColor = Color.White;
+            this.btnPrint.FlatStyle = FlatStyle.Flat;
+
             // Применение стилей
             StyleButton(this.btnCalculate);
             StyleButton(this.btnClear);
             StyleButton(this.btnRemoveSelected);
+            StyleButton(this.btnSave);
+            StyleButton(this.btnPrint);
 
             flowLayout.Controls.Add(this.btnCalculate);
             flowLayout.Controls.Add(this.btnClear);
             flowLayout.Controls.Add(this.btnRemoveSelected);
+            flowLayout.Controls.Add(this.btnSave);
+            flowLayout.Controls.Add(this.btnPrint);
+
+            // Привязка событий для новых кнопок
+            this.btnSave.Click += btnSave_Click;
+            this.btnPrint.Click += btnPrint_Click;
 
             // Информационная метка
             var infoLabel = new Label
@@ -377,5 +397,7 @@
         private Button btnClear;
         private TextBox txtResults;
         private Panel panelVisualization;
+        private Button btnSave;
+        private Button btnPrint;
     }
 }

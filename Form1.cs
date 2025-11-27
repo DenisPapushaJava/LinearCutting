@@ -1,5 +1,7 @@
 ﻿using LinearCuttingOptimizer;
 using System.Drawing;
+using System.Drawing.Printing;
+using System.Text;
 using System.Windows.Forms;
 
 namespace LinearCutting
@@ -344,6 +346,265 @@ namespace LinearCutting
                     dataGridViewParts.Rows.RemoveAt(index);
                 }
             }
+        }
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(txtResults.Text))
+            {
+                MessageBox.Show("Нет данных для сохранения. Сначала выполните расчет.", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "Текстовые файлы (*.txt)|*.txt|Файлы CSV (*.csv)|*.csv|Все файлы (*.*)|*.*";
+                saveDialog.FilterIndex = 1;
+                saveDialog.Title = "Сохранить результаты раскроя";
+                saveDialog.DefaultExt = "txt";
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string extension = Path.GetExtension(saveDialog.FileName).ToLower();
+
+                        switch (extension)
+                        {
+                            case ".txt":
+                                SaveAsText(saveDialog.FileName);
+                                break;
+                            case ".csv":
+                                SaveAsCsv(saveDialog.FileName);
+                                break;
+                            default:
+                                SaveAsText(saveDialog.FileName);
+                                break;
+                        }
+
+                        MessageBox.Show($"Результаты успешно сохранены в файл:\n{saveDialog.FileName}",
+                            "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка при сохранении файла:\n{ex.Message}", "Ошибка",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void SaveAsText(string filePath)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("ОТЧЕТ ПО РАСКРОЮ МАТЕРИАЛА");
+            sb.AppendLine("============================");
+            sb.AppendLine($"Дата создания: {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
+            sb.AppendLine($"Длина материала: {txtMaterialLength.Text} мм");
+            sb.AppendLine($"Зазор между деталями: {txtGap.Text} мм");
+            sb.AppendLine();
+
+            // Добавляем информацию о деталях
+            sb.AppendLine("РАСКРАИВАЕМЫЕ ДЕТАЛИ:");
+            sb.AppendLine("---------------------");
+            foreach (DataGridViewRow row in dataGridViewParts.Rows)
+            {
+                if (row.IsNewRow) continue;
+                string length = row.Cells["Length"].Value?.ToString() ?? "0";
+                string quantity = row.Cells["Quantity"].Value?.ToString() ?? "0";
+                string total = row.Cells["TotalLength"].Value?.ToString() ?? "0";
+                sb.AppendLine($"  Деталь: {length} мм × {quantity} шт. = {total} мм");
+            }
+            sb.AppendLine();
+
+            // Добавляем результаты расчета
+            sb.AppendLine(txtResults.Text);
+
+            File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
+
+        private void SaveAsCsv(string filePath)
+        {
+            var sb = new StringBuilder();
+
+            // Заголовок
+            sb.AppendLine("Отчет по раскрою материала");
+            sb.AppendLine($"Дата создания;{DateTime.Now:dd.MM.yyyy HH:mm:ss}");
+            sb.AppendLine($"Длина материала;{txtMaterialLength.Text} мм");
+            sb.AppendLine($"Зазор между деталями;{txtGap.Text} мм");
+            sb.AppendLine();
+
+            // Детали
+            sb.AppendLine("Детали для раскроя");
+            sb.AppendLine("Длина;Количество;Общая длина");
+            foreach (DataGridViewRow row in dataGridViewParts.Rows)
+            {
+                if (row.IsNewRow) continue;
+                string length = row.Cells["Length"].Value?.ToString() ?? "0";
+                string quantity = row.Cells["Quantity"].Value?.ToString() ?? "0";
+                string total = row.Cells["TotalLength"].Value?.ToString() ?? "0";
+                sb.AppendLine($"{length};{quantity};{total}");
+            }
+            sb.AppendLine();
+
+            // Результаты
+            sb.AppendLine("Результаты раскроя");
+            sb.AppendLine("Номер материала;Использовано;Отходы;Детали");
+
+            // Парсим текстовые результаты для CSV
+            string[] resultLines = txtResults.Text.Split('\n');
+            bool inResultsSection = false;
+
+            foreach (string line in resultLines)
+            {
+                if (line.Contains("Материал"))
+                {
+                    inResultsSection = true;
+                    // Извлекаем данные из строки вида "Материал 1:"
+                    string materialInfo = line.Replace("Материал", "").Replace(":", "").Trim();
+                    sb.Append($"{materialInfo};");
+                }
+                else if (inResultsSection && line.Contains("Использовано:"))
+                {
+                    string usedInfo = line.Replace("Использовано:", "").Trim();
+                    sb.Append($"{usedInfo};");
+                }
+                else if (inResultsSection && line.Contains("Отходы:"))
+                {
+                    string wasteInfo = line.Replace("Отходы:", "").Trim();
+                    sb.Append($"{wasteInfo};");
+                }
+                else if (inResultsSection && line.Contains("Детали:"))
+                {
+                    string partsInfo = line.Replace("Детали:", "").Trim();
+                    sb.AppendLine($"{partsInfo}");
+                    inResultsSection = false;
+                }
+            }
+
+            File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
+        private void btnPrint_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(txtResults.Text))
+            {
+                MessageBox.Show("Нет данных для печати. Сначала выполните расчет.", "Информация",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var printDialog = new PrintDialog())
+            using (var printDocument = new PrintDocument())
+            {
+                printDocument.DocumentName = "Отчет по раскрою материала";
+                printDocument.PrintPage += PrintDocument_PrintPage;
+
+                printDialog.Document = printDocument;
+                printDialog.AllowSomePages = true;
+                printDialog.ShowHelp = true;
+
+                if (printDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        printDocument.Print();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка при печати:\n{ex.Message}", "Ошибка печати",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void PrintDocument_PrintPage(object sender, PrintPageEventArgs e)
+        {
+            var graphics = e.Graphics;
+            var margin = 50;
+            var currentY = margin;
+            var pageWidth = e.PageBounds.Width - 2 * margin;
+
+            // Шрифты
+            var titleFont = new Font("Arial", 16, FontStyle.Bold);
+            var headerFont = new Font("Arial", 12, FontStyle.Bold);
+            var normalFont = new Font("Arial", 10);
+            var smallFont = new Font("Arial", 9);
+
+            // Заголовок
+            graphics.DrawString("ОТЧЕТ ПО РАСКРОЮ МАТЕРИАЛА", titleFont, Brushes.Black, margin, currentY);
+            currentY += 40;
+
+            // Информация о параметрах
+            graphics.DrawString($"Дата создания: {DateTime.Now:dd.MM.yyyy HH:mm:ss}", normalFont, Brushes.Black, margin, currentY);
+            currentY += 20;
+            graphics.DrawString($"Длина материала: {txtMaterialLength.Text} мм", normalFont, Brushes.Black, margin, currentY);
+            currentY += 20;
+            graphics.DrawString($"Зазор между деталями: {txtGap.Text} мм", normalFont, Brushes.Black, margin, currentY);
+            currentY += 30;
+
+            // Детали
+            graphics.DrawString("ДЕТАЛИ ДЛЯ РАСКРОЯ:", headerFont, Brushes.Black, margin, currentY);
+            currentY += 25;
+
+            // Таблица деталей
+            graphics.DrawString("Длина", headerFont, Brushes.Black, margin, currentY);
+            graphics.DrawString("Кол-во", headerFont, Brushes.Black, margin + 100, currentY);
+            graphics.DrawString("Общая длина", headerFont, Brushes.Black, margin + 180, currentY);
+            currentY += 20;
+
+            graphics.DrawLine(Pens.Black, margin, currentY, margin + 300, currentY);
+            currentY += 10;
+
+            foreach (DataGridViewRow row in dataGridViewParts.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                string length = row.Cells["Length"].Value?.ToString() ?? "0";
+                string quantity = row.Cells["Quantity"].Value?.ToString() ?? "0";
+                string total = row.Cells["TotalLength"].Value?.ToString() ?? "0";
+
+                graphics.DrawString(length, normalFont, Brushes.Black, margin, currentY);
+                graphics.DrawString(quantity, normalFont, Brushes.Black, margin + 100, currentY);
+                graphics.DrawString(total, normalFont, Brushes.Black, margin + 180, currentY);
+                currentY += 18;
+
+                // Проверка на конец страницы
+                if (currentY > e.PageBounds.Height - margin - 100)
+                {
+                    e.HasMorePages = true;
+                    return;
+                }
+            }
+
+            currentY += 20;
+
+            // Результаты
+            graphics.DrawString("РЕЗУЛЬТАТЫ РАСКРОЯ:", headerFont, Brushes.Black, margin, currentY);
+            currentY += 25;
+
+            // Разбиваем текстовые результаты на строки для печати
+            string[] resultLines = txtResults.Text.Split('\n');
+            foreach (string line in resultLines)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                graphics.DrawString(line, normalFont, Brushes.Black, margin, currentY);
+                currentY += 16;
+
+                // Проверка на конец страницы
+                if (currentY > e.PageBounds.Height - margin - 50)
+                {
+                    e.HasMorePages = true;
+                    return;
+                }
+            }
+
+            // Подпись в конце
+            currentY += 20;
+            graphics.DrawString("--- Конец отчета ---", smallFont, Brushes.Gray, margin, currentY);
+
+            e.HasMorePages = false;
         }
 
         private void btnQuickAdd_Click(object sender, EventArgs e)
