@@ -781,14 +781,35 @@ namespace LinearCutting
             sb.AppendLine("            border-radius: 12px; ");
             sb.AppendLine("            font-size: 0.8em; ");
             sb.AppendLine("        }");
+            sb.AppendLine("        .scale-container { ");
+            sb.AppendLine("            margin: 10px 0; ");
+            sb.AppendLine("            position: relative; ");
+            sb.AppendLine("            height: 40px; ");
+            sb.AppendLine("            border-bottom: 2px solid #3498db; ");
+            sb.AppendLine("        }");
+            sb.AppendLine("        .scale-mark { ");
+            sb.AppendLine("            position: absolute; ");
+            sb.AppendLine("            bottom: -5px; ");
+            sb.AppendLine("            width: 1px; ");
+            sb.AppendLine("            height: 10px; ");
+            sb.AppendLine("            background: #7f8c8d; ");
+            sb.AppendLine("        }");
+            sb.AppendLine("        .scale-label { ");
+            sb.AppendLine("            position: absolute; ");
+            sb.AppendLine("            bottom: -25px; ");
+            sb.AppendLine("            font-size: 0.75em; ");
+            sb.AppendLine("            color: #7f8c8d; ");
+            sb.AppendLine("            transform: translateX(-50%); ");
+            sb.AppendLine("        }");
             sb.AppendLine("        .parts-container { ");
-            sb.AppendLine("            display: flex; ");
-            sb.AppendLine("            height: 50px; ");
+            sb.AppendLine("            height: 60px; ");
             sb.AppendLine("            background: #ecf0f1; ");
             sb.AppendLine("            border-radius: 6px; ");
             sb.AppendLine("            overflow: hidden; ");
             sb.AppendLine("            border: 2px solid #bdc3c7; ");
-            sb.AppendLine("            margin: 10px 0; ");
+            sb.AppendLine("            margin: 15px 0; ");
+            sb.AppendLine("            position: relative; ");
+            sb.AppendLine("            display: flex; ");
             sb.AppendLine("        }");
             sb.AppendLine("        .part { ");
             sb.AppendLine("            height: 100%; ");
@@ -802,15 +823,27 @@ namespace LinearCutting
             sb.AppendLine("            position: relative; ");
             sb.AppendLine("            cursor: help; ");
             sb.AppendLine("            border: 1px solid rgba(0,0,0,0.3); ");
-            sb.AppendLine("            margin: -1px; ");
+            sb.AppendLine("            flex-shrink: 0; ");
             sb.AppendLine("        }");
             sb.AppendLine("        .part:hover { ");
             sb.AppendLine("            opacity: 0.9; ");
+            sb.AppendLine("            transform: scale(1.02); ");
+            sb.AppendLine("            z-index: 2; ");
             sb.AppendLine("        }");
             sb.AppendLine("        .part:last-child { border-right: none; }");
             sb.AppendLine("        .waste { ");
-            sb.AppendLine("            background: #bdc3c7 !important; ");
+            sb.AppendLine("            background: #95a5a6 !important; ");
             sb.AppendLine("            border-left: 2px dashed #e74c3c !important; ");
+            sb.AppendLine("            color: #2c3e50; ");
+            sb.AppendLine("        }");
+            sb.AppendLine("        .part-size { ");
+            sb.AppendLine("            position: absolute; ");
+            sb.AppendLine("            bottom: 2px; ");
+            sb.AppendLine("            right: 2px; ");
+            sb.AppendLine("            font-size: 9px; ");
+            sb.AppendLine("            background: rgba(255,255,255,0.8); ");
+            sb.AppendLine("            padding: 1px 3px; ");
+            sb.AppendLine("            border-radius: 2px; ");
             sb.AppendLine("        }");
             sb.AppendLine("        .parts-list { ");
             sb.AppendLine("            margin-top: 8px; ");
@@ -870,25 +903,12 @@ namespace LinearCutting
             sb.AppendLine("            margin: 15px 0; ");
             sb.AppendLine("            text-align: center; ");
             sb.AppendLine("        }");
-            sb.AppendLine("        .repeat-stats { ");
-            sb.AppendLine("            display: grid; ");
-            sb.AppendLine("            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); ");
-            sb.AppendLine("            gap: 10px; ");
-            sb.AppendLine("            margin-top: 12px; ");
-            sb.AppendLine("        }");
-            sb.AppendLine("        .repeat-item { ");
-            sb.AppendLine("            background: rgba(255,255,255,0.9); ");
-            sb.AppendLine("            color: #2c3e50; ");
-            sb.AppendLine("            padding: 10px; ");
-            sb.AppendLine("            border-radius: 6px; ");
-            sb.AppendLine("            text-align: center; ");
-            sb.AppendLine("        }");
             sb.AppendLine("        @media (max-width: 768px) { ");
             sb.AppendLine("            .container { margin: 10px; }");
             sb.AppendLine("            .content { padding: 15px; }");
             sb.AppendLine("            .params-grid { grid-template-columns: 1fr; }");
             sb.AppendLine("            .rod-header { flex-direction: column; gap: 8px; }");
-            sb.AppendLine("            .stats, .repeat-stats { grid-template-columns: 1fr 1fr; }");
+            sb.AppendLine("            .stats { grid-template-columns: 1fr 1fr; }");
             sb.AppendLine("        }");
             sb.AppendLine("    </style>");
             sb.AppendLine("</head>");
@@ -1018,20 +1038,43 @@ namespace LinearCutting
                 sb.AppendLine($"                    | Отходы: <strong>{waste:F1}</strong> мм");
                 sb.AppendLine($"                </div>");
 
-                // Графическое представление - упрощенное как в программе
+                // Шкала масштаба
+                sb.AppendLine($"                <div class='scale-container'>");
+                // Добавляем метки каждые 25%
+                for (int j = 0; j <= 4; j++)
+                {
+                    double markPosition = (materialLength * j / 4);
+                    double markPercent = (markPosition / materialLength) * 100;
+                    sb.AppendLine($"                    <div class='scale-mark' style='left: {markPercent}%;'></div>");
+                    sb.AppendLine($"                    <div class='scale-label' style='left: {markPercent}%;'>{markPosition:F0} мм</div>");
+                }
+                sb.AppendLine($"                </div>");
+
+                // Графическое представление с ТОЧНЫМИ пропорциями
                 sb.AppendLine($"                <div class='parts-container'>");
 
                 foreach (var part in rod.Parts)
                 {
+                    // ТОЧНЫЙ расчет ширины в процентах
                     double widthPercent = (part / materialLength) * 100;
                     string color = colorMap[part];
 
-                    sb.AppendLine($"                    <div class='part' style='width: {widthPercent}%; background: {color};' title='{part} мм'>");
+                    sb.AppendLine($"                    <div class='part' style='width: {widthPercent}%; background: {color};' title='Деталь: {part} мм ({widthPercent:F1}% материала)'>");
 
-                    // Просто показываем длину внутри детали, если достаточно места
-                    if (widthPercent > 15)
+                    // Показываем длину внутри детали
+                    if (widthPercent > 10)
+                    {
+                        sb.AppendLine($"                        {part:F0} мм");
+                    }
+                    else if (widthPercent > 5)
                     {
                         sb.AppendLine($"                        {part:F0}");
+                    }
+
+                    // Размер детали в процентах
+                    if (widthPercent > 8)
+                    {
+                        sb.AppendLine($"                        <div class='part-size'>{widthPercent:F1}%</div>");
                     }
 
                     sb.AppendLine($"                    </div>");
@@ -1041,11 +1084,16 @@ namespace LinearCutting
                 if (waste > 0)
                 {
                     double wastePercent = (waste / materialLength) * 100;
-                    sb.AppendLine($"                    <div class='part waste' style='width: {wastePercent}%' title='Отходы: {waste:F1} мм'>");
+                    sb.AppendLine($"                    <div class='part waste' style='width: {wastePercent}%' title='Отходы: {waste:F1} мм ({wastePercent:F1}% материала)'>");
 
                     if (wastePercent > 10)
                     {
                         sb.AppendLine($"                        отходы");
+                    }
+
+                    if (wastePercent > 8)
+                    {
+                        sb.AppendLine($"                        <div class='part-size'>{wastePercent:F1}%</div>");
                     }
 
                     sb.AppendLine($"                    </div>");
