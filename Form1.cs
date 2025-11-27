@@ -26,12 +26,55 @@ namespace LinearCutting
             dataGridViewParts.Columns["TotalLength"].ValueType = typeof(double);
             dataGridViewParts.Columns["TotalLength"].ReadOnly = true;
 
+            // Стилизация DataGridView
+            dataGridViewParts.BackgroundColor = Color.White;
+            dataGridViewParts.BorderStyle = BorderStyle.None;
+            dataGridViewParts.EnableHeadersVisualStyles = false;
+            dataGridViewParts.Font = new Font("Segoe UI", 9F);
+
+            // Стиль заголовков
+            dataGridViewParts.ColumnHeadersDefaultCellStyle.BackColor = Color.SteelBlue;
+            dataGridViewParts.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dataGridViewParts.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dataGridViewParts.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing;
+            dataGridViewParts.ColumnHeadersHeight = 30;
+
+            // Стиль строк
+            dataGridViewParts.RowsDefaultCellStyle.BackColor = Color.White;
+            dataGridViewParts.AlternatingRowsDefaultCellStyle.BackColor = Color.AliceBlue;
+
             dataGridViewParts.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewParts.AllowUserToResizeRows = false;
 
             // Добавляем обработчик для автоматического пересчета общей длины
             dataGridViewParts.CellValueChanged += DataGridViewParts_CellValueChanged;
-        }
 
+            // Обработчик для форматирования ячеек
+            dataGridViewParts.CellFormatting += DataGridViewParts_CellFormatting;
+        }
+        private void DataGridViewParts_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                // Форматирование числовых значений
+                if (dataGridViewParts.Columns[e.ColumnIndex].Name == "Length" && e.Value != null)
+                {
+                    if (double.TryParse(e.Value.ToString(), out double value))
+                    {
+                        e.Value = value.ToString("F1");
+                        e.FormattingApplied = true;
+                    }
+                }
+                else if (dataGridViewParts.Columns[e.ColumnIndex].Name == "TotalLength" && e.Value != null)
+                {
+                    if (double.TryParse(e.Value.ToString(), out double value))
+                    {
+                        e.Value = value.ToString("F1");
+                        e.FormattingApplied = true;
+                    }
+                }
+            }
+        }
         private void DataGridViewParts_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0 && (e.ColumnIndex == 0 || e.ColumnIndex == 1))
